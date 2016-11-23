@@ -29,10 +29,10 @@ io.on('connection', function (socket) {
         var post = {user_id: json.userId, user_password: json.userPassword, user_nickname: json.userNickname};
 
         connection.query(sqlQuery, post, function (err, result) {
-            if(err == null){
+            if (err == null) {
                 socket.emit('RegisterUserRes', 1);
                 console.log(json.userId + "회원가입 SUC")
-            }else {
+            } else {
                 socket.emit('RegisterUserRes', 0);
             }
         });
@@ -40,16 +40,70 @@ io.on('connection', function (socket) {
 
     socket.on('Login', function (data) {
         var json = JSON.parse(data);
-        var sqlQuery = "SELET user_password FROM user WHERE id = " + json.userId;
+        var sqlQuery = "SELECT user_password FROM user WHERE user_id = '" + json.id + "'";
         connection.query(sqlQuery, function (err, result) {
-            if(err == null){
-                socket.emit('RegisterUserRes', 1);
-
-            }else {
-                socket.emit('RegisterUserRes', 0);
+            if (err == null) {
+                if (result[0] != null) {
+                    var passwordCheck = json.password == result[0].user_password;
+                    if (passwordCheck) {
+                        socket.emit('LoginRes', 1);
+                    } else {
+                        socket.emit('LoginRes', 0);
+                    }
+                } else {
+                    socket.emit('LoginRes', 0);
+                }
+            } else {
+                socket.emit('LoginRes', 0);
             }
         });
     });
+
+    socket.on('AddFriend', function (data) {
+        var json = JSON.parse(data);
+
+        var sqlQuery = "SELECT user_nickname FROM user WHERE user_nickname = '" + json.friendNickname + "'";
+        connection.query(sqlQuery,function (err,result) {
+            if(err == null){
+                if (result[0] != null) {
+                    var sqlQuery = "SELECT user_nickname FROM user WHERE user_id = '" + json.userId + "'";
+                    connection.query(sqlQuery, function (err, result) {
+                        if (err == null) {
+                            var userNickname = result[0].user_nickname;
+                            var sqlQuery = "INSERT INTO friend SET ?"
+                            var post = {user_nickname: userNickname, friend_nickname: json.friendNickname};
+                            connection.query(sqlQuery, post, function (err, result) {
+                                if (err == null) {
+                                    var sqlQuery = "INSERT INTO friend SET ?"
+                                    var post = {user_nickname: json.friendNickname, friend_nickname: userNickname};
+                                    connection.query(sqlQuery, post, function (err, result) {
+                                        if (err == null) {
+                                            socket.emit('AddFriendRes', 1);
+                                        } else {
+                                            socket.emit('AddFriendRes', 0) // 특수상황;
+                                        }
+
+                                    });
+                                } else {
+                                    socket.emit('AddFriendRes', 0);
+                                }
+                            });
+
+                        } else {
+                            socket.emit('AddFriendRes', 0);
+                        }
+                    });
+                }else {
+                    socket.emit('AddFriendRes', 0);
+                }
+            }else {
+                socket.emit('AddFriendRes', 0);
+            }
+        });
+
+
+
+    })
 });
 
 function Room(roomName, masterSessionId) {
