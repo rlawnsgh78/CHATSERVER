@@ -9,7 +9,7 @@ var io = require('socket.io').listen(httpServer);
 
 var mysql = require("mysql");
 var connection = mysql.createConnection({
-    host: "192.168.0.20",
+    host: "127.0.0.1",
     port: 3306,
     user: "root",
     password: "",
@@ -101,9 +101,32 @@ io.on('connection', function (socket) {
             }
         });
 
+    });
 
+    socket.on('GetFriendList',function(data){
+        var sqlQuery = "SELECT user_nickname FROM user WHERE user_id = '" + data + "'"; 
+        connection.query(sqlQuery,function (err,result) {
+            if(err == null){
+                if(result[0] != null){
+                    var sqlQuery = "SELECT friend_nickname FROM friend WHERE user_nickname = '" + result[0].user_nickname + "'"; 
+                    connection.query(sqlQuery,function(err,result){
+                        if(err == null){
+                            if(result!=null){
+                                socket.emit('GetFriendListRes',result);
+                            }
+                        }else{
+                            socket.emit('GetFriendListRes',0);
+                        }
+                    });
+                }else{
+                    socket.emit('GetFriendListRes',0);
+                }
+            }else{
+                socket.emit('GetFriendListRes',0);
+            }
+        });
 
-    })
+    });
 });
 
 function Room(roomName, masterSessionId) {
