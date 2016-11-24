@@ -9,7 +9,7 @@ var io = require('socket.io').listen(httpServer);
 
 var mysql = require("mysql");
 var connection = mysql.createConnection({
-    host: "127.0.0.1",
+    host: "192.168.0.20",
     port: 3306,
     user: "root",
     password: "",
@@ -21,7 +21,6 @@ connection.connect();
 io.on('connection', function (socket) {
 
     socket.on('RegisterUser', function (data) {
-
         var json = JSON.parse(data);
         var sqlQuery = "INSERT INTO user SET ?"
         var post = {user_id: json.userId, user_password: json.userPassword, user_nickname: json.userNickname};
@@ -71,7 +70,7 @@ io.on('connection', function (socket) {
 
     socket.on('AddFriend', function (data) {
         var json = JSON.parse(data);
-        var sqlQuery = "SELECT frined_nickname FROM friend WHERE user_nickname = '" + json.user_nickname + "'l";
+        var sqlQuery = "SELECT friend_nickname FROM friend WHERE user_nickname = '" + json.user_nickname + "'";
         connection.query(sqlQuery, function (err , result) {
             if(err == null){
                 if(result.length == 0){
