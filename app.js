@@ -19,20 +19,28 @@ var connection = mysql.createConnection({
 connection.connect();
 
 io.on('connection', function (socket) {
-
-    socket.on('RegisterUser', function (data) {
+       socket.on('RegisterUser', function (data) {
         var json = JSON.parse(data);
-        var sqlQuery = "INSERT INTO user SET ?"
-        var post = {user_id: json.userId, user_password: json.userPassword, user_nickname: json.userNickname};
+        var sqlQuery = "SELECT user_id FROM user WHERE user_id = '" + json.is + "';";
+      connection.query(sqlQuery, function(err , result){
+         if(err == null){
+            if (result.length == 0){
+            var sqlQuery = "INSERT INTO user SET ?"
+              var post = {user_id: json.userId, user_password: json.userPassword, user_nickname: json.userNickname};
 
-        connection.query(sqlQuery, post, function (err, result) {
-            if (err == null) {
-                socket.emit('RegisterUserRes', 1);
-                console.log(json.userId + "회원가입 SUC")
-            } else {
+              connection.query(sqlQuery, post, function (err, result) {
+                  if (err == null) {
+                      socket.emit('RegisterUserRes', 1);
+                      console.log(json.userId + "회원가입 SUC")
+                  } else {
+                      socket.emit('RegisterUserRes', 0);
+                  }
+              });
+            }else{
                 socket.emit('RegisterUserRes', 0);
             }
-        });
+         }
+      });
     });
 
     socket.on('Login', function (data) {
@@ -203,8 +211,9 @@ io.on('connection', function (socket) {
 
         connection.query(sqlQuery, post, function (err, result) {
             if (err == null) {
+                var json = JSON.parse(data);
                 socket.emit('SendMessageRes', data);
-                io.sockets.emit('SendMessageRes' + data.friend_nickname, data);
+                io.sockets.emit(json.friend_nickname+json.user_nickname, data);
             } else {
                 socket.emit('SendMessageRes', 0);
             }
@@ -217,7 +226,6 @@ io.on('connection', function (socket) {
         connection.query(sqlQuery, function (err, result) {
             if (err == null) {
                 if (result[0] != null) {
-                    console.log(result);
                     socket.emit('GetMessageListRes', result);
                 }
             }
