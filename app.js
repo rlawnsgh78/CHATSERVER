@@ -19,28 +19,46 @@ var connection = mysql.createConnection({
 connection.connect();
 
 io.on('connection', function (socket) {
-       socket.on('RegisterUser', function (data) {
-        var json = JSON.parse(data);
-        var sqlQuery = "SELECT user_id FROM user WHERE user_id = '" + json.is + "';";
-      connection.query(sqlQuery, function(err , result){
-         if(err == null){
-            if (result.length == 0){
-            var sqlQuery = "INSERT INTO user SET ?"
-              var post = {user_id: json.userId, user_password: json.userPassword, user_nickname: json.userNickname};
 
-              connection.query(sqlQuery, post, function (err, result) {
-                  if (err == null) {
-                      socket.emit('RegisterUserRes', 1);
-                      console.log(json.userId + "회원가입 SUC")
-                  } else {
-                      socket.emit('RegisterUserRes', 0);
-                  }
-              });
-            }else{
+    socket.on('RegisterUser', function (data) {
+        var json = JSON.parse(data);
+        var sqlQuery = "SELECT user_id FROM user WHERE user_id = '" + json.userId + "';";
+        connection.query(sqlQuery, function (err, result) {
+            if (err == null) {
+                if (result.length == 0) {
+                    var sqlQuery = "SELECT user_nickname FROM user WHERE user_id = '" + json.userNickname + "';";
+                    connection.query(sqlQuery, function (err, result) {
+                        if (err == null) {
+                            if (result.length == 0) {
+                                var sqlQuery = "INSERT INTO user SET ?"
+                                var post = {
+                                    user_id: json.userId,
+                                    user_password: json.userPassword,
+                                    user_nickname: json.userNickname
+                                };
+
+                                connection.query(sqlQuery, post, function (err, result) {
+                                    if (err == null) {
+                                        socket.emit('RegisterUserRes', 1);
+                                        console.log(json.userId + "회원가입 SUC")
+                                    } else {
+                                        socket.emit('RegisterUserRes', 0);
+                                    }
+                                });
+                            } else {
+                                socket.emit('RegisterUserRes', 0);
+                            }
+                        } else {
+                            socket.emit('RegisterUserRes', 0);
+                        }
+                    });
+                }else {
+                    socket.emit('RegisterUserRes', 0);
+                }
+            }else {
                 socket.emit('RegisterUserRes', 0);
             }
-         }
-      });
+        });
     });
 
     socket.on('Login', function (data) {
@@ -79,9 +97,9 @@ io.on('connection', function (socket) {
     socket.on('AddFriend', function (data) {
         var json = JSON.parse(data);
         var sqlQuery = "SELECT friend_nickname FROM friend WHERE user_nickname = '" + json.user_nickname + "'";
-        connection.query(sqlQuery, function (err , result) {
-            if(err == null){
-                if(result.length == 0){
+        connection.query(sqlQuery, function (err, result) {
+            if (err == null) {
+                if (result.length == 0) {
                     var sqlQuery = "SELECT user_nickname FROM user WHERE user_nickname = '" + json.friendNickname + "'";
                     connection.query(sqlQuery, function (err, result) {
                         if (err == null) {
@@ -95,7 +113,10 @@ io.on('connection', function (socket) {
                                         connection.query(sqlQuery, post, function (err, result) {
                                             if (err == null) {
                                                 var sqlQuery = "INSERT INTO friend SET ?"
-                                                var post = {user_nickname: json.friendNickname, friend_nickname: userNickname};
+                                                var post = {
+                                                    user_nickname: json.friendNickname,
+                                                    friend_nickname: userNickname
+                                                };
                                                 connection.query(sqlQuery, post, function (err, result) {
                                                     if (err == null) {
                                                         socket.emit('AddFriendRes', 1);
@@ -119,18 +140,18 @@ io.on('connection', function (socket) {
                             socket.emit('AddFriendRes', 0);
                         }
                     });
-                }else {
+                } else {
                     var nameCheck = false;
-                    for(var i = 0; i<result.length; i++){
+                    for (var i = 0; i < result.length; i++) {
                         var friendName = result[i].friend_nickname;
                         nameCheck = (friendName == json.friend_nickname);
-                        if(nameCheck){
+                        if (nameCheck) {
                             socket.emit('AddFriendRes', 0);
                         }
                     }
-                    if(nameCheck){
+                    if (nameCheck) {
                         socket.emit('AddFriendRes', 0);
-                    }else {
+                    } else {
                         var sqlQuery = "SELECT user_nickname FROM user WHERE user_nickname = '" + json.friendNickname + "'";
                         connection.query(sqlQuery, function (err, result) {
                             if (err == null) {
@@ -140,11 +161,17 @@ io.on('connection', function (socket) {
                                         if (err == null) {
                                             var userNickname = result[0].user_nickname;
                                             var sqlQuery = "INSERT INTO friend SET ?"
-                                            var post = {user_nickname: userNickname, friend_nickname: json.friendNickname};
+                                            var post = {
+                                                user_nickname: userNickname,
+                                                friend_nickname: json.friendNickname
+                                            };
                                             connection.query(sqlQuery, post, function (err, result) {
                                                 if (err == null) {
                                                     var sqlQuery = "INSERT INTO friend SET ?"
-                                                    var post = {user_nickname: json.friendNickname, friend_nickname: userNickname};
+                                                    var post = {
+                                                        user_nickname: json.friendNickname,
+                                                        friend_nickname: userNickname
+                                                    };
                                                     connection.query(sqlQuery, post, function (err, result) {
                                                         if (err == null) {
                                                             socket.emit('AddFriendRes', 1);
@@ -170,11 +197,10 @@ io.on('connection', function (socket) {
                         });
                     }
                 }
-            }else {
+            } else {
                 socket.emit('AddFriendRes', 0);
             }
         });
-
 
 
     });
@@ -213,7 +239,7 @@ io.on('connection', function (socket) {
             if (err == null) {
                 var json = JSON.parse(data);
                 socket.emit('SendMessageRes', data);
-                io.sockets.emit(json.friend_nickname+json.user_nickname, data);
+                io.sockets.emit(json.friend_nickname + json.user_nickname, data);
             } else {
                 socket.emit('SendMessageRes', 0);
             }
@@ -231,4 +257,5 @@ io.on('connection', function (socket) {
             }
         });
     });
-});
+})
+;
