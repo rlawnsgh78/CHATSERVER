@@ -9,10 +9,10 @@ var io = require('socket.io').listen(httpServer);
 
 var mysql = require("mysql");
 var connection = mysql.createConnection({
-    host: "192.168.0.20",
-    port: 3306,
-    user: "root",
-    password: "",
+    host: "127.0.0.1",
+    port: 10200,
+    user: "cps435",
+    password: "cps435",
     database: "chatapp"
 });
 
@@ -120,6 +120,7 @@ io.on('connection', function (socket) {
                                                 connection.query(sqlQuery, post, function (err, result) {
                                                     if (err == null) {
                                                         socket.emit('AddFriendRes', 1);
+                                                        io.sockets.emit('GetFriendListReq');
                                                     } else {
                                                         socket.emit('AddFriendRes', 0); // 특수상황;
                                                     }
