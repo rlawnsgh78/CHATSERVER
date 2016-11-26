@@ -52,10 +52,10 @@ io.on('connection', function (socket) {
                             socket.emit('RegisterUserRes', 0);
                         }
                     });
-                }else {
+                } else {
                     socket.emit('RegisterUserRes', 0);
                 }
-            }else {
+            } else {
                 socket.emit('RegisterUserRes', 0);
             }
         });
@@ -201,8 +201,6 @@ io.on('connection', function (socket) {
                 socket.emit('AddFriendRes', 0);
             }
         });
-
-
     });
 
     socket.on('GetFriendList', function (data) {
@@ -214,6 +212,7 @@ io.on('connection', function (socket) {
                     connection.query(sqlQuery, function (err, result) {
                         if (err == null) {
                             if (result != null) {
+
                                 socket.emit('GetFriendListRes', result);
                             }
                         } else {
